@@ -225,6 +225,7 @@
 
     window.socket.on("answers", function (data) {
       let answers = data.gameAnswers
+      console.log(answers)
       $('#players').empty()
       $('#players').append(`
         <tr>
@@ -301,7 +302,6 @@
 
   function sendAnswers() {
     $(".endgame a").hide();
-
     if (!finished) {
       finished = true;
       startGame = false;
@@ -313,6 +313,12 @@
         pais: $('#país').val(),
         color: $('#color').val()
       }
+
+        if(answers.nombre == ""){answers.nombre = "-"}
+        if(answers.comida == ""){answers.comida = "-"}
+        if(answers.pelicula == ""){answers.pelicula = "-"}
+        if(answers.pais == ""){answers.pais = "-"}
+        if(answers.color == ""){answers.color = "-"}
       console.log(answers)
       window.socket.emit("basta", { answers })
     }
