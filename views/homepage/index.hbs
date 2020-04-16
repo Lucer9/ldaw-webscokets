@@ -1,11 +1,340 @@
+<style>
+  body {
+    background-color: #F7F0EE;
+    color: #6DD3A0;
+    font-family: 'Pangolin', 'Arial';
+    font-size: 18px;
+  }
+
+  h1 {
+    margin-top: 20px;
+    font-size: 3em;
+    font-weight: bolder;
+    text-align: center;
+  }
+
+  h4 {
+    font-size: .8em;
+    margin-top: -10px;
+    margin-bottom: 40px;
+    text-align: center;
+
+  }
+
+  table {
+    width: 95%;
+    margin: 0 auto;
+    table-layout: fixed;
+    max-width: 900px;
+  }
+
+  th {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  td {
+    color: rgba(0, 0, 0, .7);
+    height: 50px;
+    text-align: center;
+  }
+
+  .center {
+    text-align: center;
+  }
+
+  .bold {
+    font-weight: bolder;
+  }
+
+  input {
+    width: 80%;
+    background-color: transparent;
+    border: none;
+    text-align: center;
+
+    border-bottom: 1px solid rgba(0, 0, 0, .2);
+  }
+
+  .basta {
+    position: absolute;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: -1;
+    user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    display: none;
+  }
+
+  .basta p {
+    text-align: center;
+    top: 0;
+    font-size: 250px;
+    line-height: 100vh;
+    opacity: .7;
+  }
+
+  .np {
+    opacity: .5;
+  }
+
+  .endgame {
+    position: fixed;
+    width: 100%;
+    height: 60px;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+  }
+
+  p {
+    font-size: 30px;
+    line-height: 60px;
+  }
+
+  a {
+    display: block;
+    text-align: center;
+    background-color: #6DD3A0;
+    color: #F7F0EE !important;
+    font-size: 30px;
+    line-height: 60px;
+    cursor: pointer;
+    display: none;
+  }
+
+  input.wrong {
+    border-bottom: 1px solid red;
+    color: red
+  }
+
+  input.wrong::placeholder {
+    color: red;
+  }
+</style>
+
+
 <main role="main" class="container">
-  <div class="starter-template">
-    <h1>Bootstrap starter template</h1>
-    <p class="lead">
-      Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.
-    </p>
-    <p>
-      Source: <a href="https://getbootstrap.com/docs/4.0/examples/" target="_blank">https://getbootstrap.com/docs/4.0/examples/</a>
-    </p>
+  <div class="basta">
+    <p>BASTA</p>
+  </div>
+  <div class="main">
+    <h1>BASTA</h1>
+    <h4>Carlos Aguirre Orozco | A01336319</h4>
+
+    <h1 id="letter"></h1>
+    <table id="players">
+    </table>
+
+    <div class="endgame">
+      <p class="center">Esperando juego...</p>
+      <a class="center">BASTA</a>
+    </div>
   </div>
 </main>
+
+
+
+<script>
+  let firstime = true
+  let countdown = 0;
+  let playerName = "";
+  let letter = "";
+  let finished = false
+  let startGame = false
+  window.socket = null;
+  players = []
+  function connectToSocketIO() {
+    let server = window.location.protocol + "//" + window.location.host;
+    window.socket = io.connect(server);
+    window.socket.on('checkPlayers', function (data) {
+      window.socket.emit("addPlayer", { playerName })
+    });
+    window.socket.on('updatePlayers', function (data) {
+      console.log(playerName)
+      $(".endgame p").html("Esperando Juego");
+      $(".endgame p").show();
+      $(".endgame a").hide();
+      players = data.players
+      $('#players').empty()
+      $('#players').append(`
+        <tr>
+        <th>Jugador</th>
+        <th>Nombre</th>
+        <th>Comida</th>
+        <th>Película</th>
+        <th>País</th>
+        <th>Color</th>
+        </tr>
+        <br>
+        `);
+      for (let player of players) {
+        if (player == playerName) {
+          $('#players').append(`
+        <tr>
+          <td class="bold ">${player}</td>
+          <td><input placeholder="Nombre" id="nombre" value=""></td>
+          <td><input placeholder="Comida" id="comida" value=""></td>
+          <td><input placeholder="Película" id="película" value=""></td>
+          <td><input placeholder="País" id="país" value=""></td>
+          <td><input placeholder="Color" id="color" value=""></td>
+        </tr>
+        `);
+        } else {
+          $('#players').append(`
+        <tr>
+          <td class="bold np">${player}</td>
+          <td class="np">...</td>
+          <td class="np">...</td>
+          <td class="np">...</td>
+          <td class="np">...</td>
+          <td class="np">...</td>
+        </tr>
+        `);
+        }
+      }
+    })
+    window.socket.on('updateTimer', function (data) {
+      $(".endgame p").html(data.timer + " segundos");
+    });
+
+    window.socket.on('playerName', function (data) {
+      playerName = data.playerName
+      console.log(playerName)
+    });
+
+    window.socket.on('theLetterIs', function (data) {
+      letter = data.letter
+    });
+
+    window.socket.on('startGame', function (data) {
+      finished = false;
+      startGame = true;
+      $(".endgame p").hide();
+      $(".endgame a").show();
+      $("#letter").html("La letra es: " + letter.toUpperCase())
+    });
+
+    window.socket.on("basta", function () {
+      startCountdown()
+    });
+
+    window.socket.on("answers", function (data) {
+      let answers = data.gameAnswers
+      $('#players').empty()
+      $('#players').append(`
+        <tr>
+        <th>Jugador</th>
+        <th>Nombre</th>
+        <th>Comida</th>
+        <th>Película</th>
+        <th>País</th>
+        <th>Color</th>
+        <th>Puntos</th>
+        </tr>
+        <br>
+        `);
+      for (let a of answers) {
+
+        $('#players').append(`
+        <tr>
+          <td>${a.player}</td>
+          <td>${a.nombre}</td>
+          <td>${a.comida}</td>
+          <td>${a.pelicula}</td>
+          <td>${a.pais}</td>
+          <td>${a.color}</td>
+          <td>${countWords(answers, a)}</td>
+        </tr>
+        `);
+      }
+    })
+
+    $(".endgame a").click(function () {
+      $('.wrong').removeClass("wrong")
+      if ($('#nombre').val() == "" || $('#nombre').val()[0].toUpperCase() != letter.toUpperCase()) { $('#nombre').addClass("wrong") }
+      if ($('#comida').val() == "" || $('#comida').val()[0].toUpperCase() != letter.toUpperCase()) { $('#comida').addClass("wrong") }
+      if ($('#película').val() == "" || $('#película').val()[0].toUpperCase() != letter.toUpperCase()) { $('#película').addClass("wrong") }
+      if ($('#país').val() == "" || $('#país').val()[0].toUpperCase() != letter.toUpperCase()) { $('#país').addClass("wrong") }
+      if ($('#color').val() == "" || $('#color').val()[0].toUpperCase() != letter.toUpperCase()) { $('#color').addClass("wrong") }
+      if ($('.wrong').length == 0) {
+        sendAnswers()
+      }
+    });
+  }
+
+  function countWords(array, player) {
+    let nombrePoints = 0;
+    let comidaPoints = 0;
+    let peliculaPoints = 0;
+    let paisPoints = 0;
+    let colorPoints = 0;
+    points = [0, 100, 50, 25]
+    let total = 0;
+    for (let a of array) {
+      if (a.nombre.toUpperCase() == player.nombre.toUpperCase() && player.nombre != "") { nombrePoints++ }
+      if (a.comida.toUpperCase() == player.comida.toUpperCase() && player.comida != "") { comidaPoints++ }
+      if (a.pelicula.toUpperCase() == player.pelicula.toUpperCase() && player.pelicula != "") { peliculaPoints++ }
+      if (a.pais.toUpperCase() == player.pais.toUpperCase() && player.pais != "") { paisPoints++ }
+      if (a.color.toUpperCase() == player.color.toUpperCase() && player.color != "") { colorPoints++ }
+    }
+
+    if (player.nombre[0].toUpperCase() != letter.toUpperCase()) { nombrePoints = 0 }
+    if (player.comida[0].toUpperCase() != letter.toUpperCase()) { comidaPoints = 0 }
+    if (player.pelicula[0].toUpperCase() != letter.toUpperCase()) { peliculaPoints = 0 }
+    if (player.pais[0].toUpperCase() != letter.toUpperCase()) { paisPoints = 0 }
+    if (player.color[0].toUpperCase() != letter.toUpperCase()) { colorPoints = 0 }
+
+    if (nombrePoints > 3) { nombrePoints = points[3] } else { nombrePoints = points[nombrePoints] }
+    if (comidaPoints > 3) { comidaPoints = points[3] } else { comidaPoints = points[comidaPoints] }
+    if (peliculaPoints > 3) { peliculaPoints = points[3] } else { peliculaPoints = points[peliculaPoints] }
+    if (paisPoints > 3) { paisPoints = points[3] } else { paisPoints = points[paisPoints] }
+    if (colorPoints > 3) { colorPoints = points[3] } else { colorPoints = points[colorPoints] }
+
+    total = (nombrePoints + comidaPoints + peliculaPoints + paisPoints + colorPoints)
+    return Math.floor(total)
+  }
+
+  function sendAnswers() {
+    $(".endgame a").hide();
+
+    if (!finished) {
+      finished = true;
+      startGame = false;
+      answers = {
+        player: playerName,
+        nombre: $('#nombre').val(),
+        comida: $('#comida').val(),
+        pelicula: $('#película').val(),
+        pais: $('#país').val(),
+        color: $('#color').val()
+      }
+      console.log(answers)
+      window.socket.emit("basta", { answers })
+    }
+  }
+
+  function startCountdown() {
+    let distance = 10
+    var x = setInterval(function () {
+      $(".basta").first().fadeToggle(300);
+      $(".basta p").html("BASTA " + (10 - distance));
+      console.log(distance)
+      distance--;
+      $(".basta").first().fadeToggle(300);
+      if (distance < 0) {
+        clearInterval(x);
+        sendAnswers()
+
+      }
+    }, 1000);
+  }
+
+  $(function () {
+    connectToSocketIO();
+  })
+</script>

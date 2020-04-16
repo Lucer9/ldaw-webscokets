@@ -12,6 +12,8 @@ router.get('/auth/login', authController.login);
 router.get('/auth/register', authController.register);
 router.post('/auth/register', authValidator.store, authController.store);
 router.post('/auth/login', passport.authenticate('local', { failureRedirect: '/auth/login?authError=1', successRedirect: '/' }));
+
+
 router.get('/auth/logout', (req, res) => {
   req.logout();
   res.redirect('/');
