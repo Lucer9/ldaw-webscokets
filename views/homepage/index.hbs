@@ -18,7 +18,6 @@
     margin-top: -10px;
     margin-bottom: 40px;
     text-align: center;
-
   }
 
   table {
@@ -249,10 +248,25 @@
           <td>${a.pelicula}</td>
           <td>${a.pais}</td>
           <td>${a.color}</td>
-          <td>${countWords(answers, a)}</td>
+          <td class="result" data-value="${a.player}">${countWords(answers, a)}</td>
         </tr>
         `);
       }
+      let results = $(".result")
+      let winner = 0;
+      let winnerName = "";
+      for (let a of results) {
+        console.log($(a).html())
+        if ($(a).html() > winner) {
+          winner = $(a).html()
+          winnerName = $(a).attr('data-value');
+        }else
+        if ($(a).html() == winner) {
+          winnerName = winnerName+ " & "+ $(a).attr('data-value');
+        }
+      }
+      $("#letter").html("El ganador es: " + winnerName)
+
     })
 
     $(".endgame a").click(function () {
@@ -314,11 +328,11 @@
         color: $('#color').val()
       }
 
-        if(answers.nombre == ""){answers.nombre = "-"}
-        if(answers.comida == ""){answers.comida = "-"}
-        if(answers.pelicula == ""){answers.pelicula = "-"}
-        if(answers.pais == ""){answers.pais = "-"}
-        if(answers.color == ""){answers.color = "-"}
+      if (answers.nombre == "") { answers.nombre = "-" }
+      if (answers.comida == "") { answers.comida = "-" }
+      if (answers.pelicula == "") { answers.pelicula = "-" }
+      if (answers.pais == "") { answers.pais = "-" }
+      if (answers.color == "") { answers.color = "-" }
       console.log(answers)
       window.socket.emit("basta", { answers })
     }
